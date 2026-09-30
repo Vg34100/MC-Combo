@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "package": "net.vg.combo.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "minVersion": "0.8",
+  "mixins": [
+    "PlayerAttackMixin",
+    "LivingEntityBlockMixin",
+    "BlocksAttacksMixin",
+    "StealthVisibilityMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

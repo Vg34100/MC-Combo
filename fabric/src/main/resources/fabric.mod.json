@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "id": "combo",
+  "version": "${version}",
+  "name": "Combo",
+  "description": "Starter Architectury mod template for Minecraft 26.1.2.",
+  "authors": [
+    "Replace Me"
+  ],
+  "license": "MIT",
+  "icon": "assets/combo/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "net.vg.combo.fabric.ComboFabric"
+    ],
+    "client": [
+      "net.vg.combo.fabric.client.ComboFabricClient"
+    ],
+    "modmenu": [
+      "net.vg.combo.fabric.client.ComboModMenu"
+    ]
+  },
+  "mixins": [
+    "combo.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.19.3",
+    "minecraft": "26.1.2",
+    "java": ">=25",
+    "architectury": ">=20.0.0",
+    "fabric-api": "*"
+  },
+  "suggests": {
+    "modmenu": "*"
+  }
+}
