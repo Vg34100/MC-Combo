@@ -150,7 +150,11 @@ public final class ComboCombat {
             double nz = dz / length;
             if (target instanceof LivingEntity livingTarget) {
                 // Direction convention matches vanilla LivingEntity#actuallyHurt: push away from the attacker.
+                //? if >=26.2 {
+                /*livingTarget.knockback(knockback, nx, nz, player.damageSources().playerAttack(player), 0.0F, true);
+                *///? } else {
                 livingTarget.knockback(knockback, nx, nz);
+                //? }
             } else {
                 target.push(-nx * knockback, 0.1D, -nz * knockback);
             }

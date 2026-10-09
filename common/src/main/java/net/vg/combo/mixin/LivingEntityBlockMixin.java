@@ -3,6 +3,7 @@ package net.vg.combo.mixin;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.damagesource.DamageSource;
 import net.vg.combo.combat.ComboParry;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -20,8 +21,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  */
 @Mixin(LivingEntity.class)
 public abstract class LivingEntityBlockMixin {
+    //? if >=26.1 {
     @Inject(method = "blockedByItem", at = @At("HEAD"))
-    private void combo$onBlockedItem(LivingEntity defender, CallbackInfo ci) {
+    //? } else {
+    /*@Inject(method = "blockedByShield", at = @At("HEAD"))
+    *///? }
+    private void combo$onBlockedItem(LivingEntity defender,
+            //? if >=26.2 {
+            /*DamageSource source, float damage,
+            *///? }
+            CallbackInfo ci) {
         LivingEntity attacker = (LivingEntity) (Object) this;
         if (defender instanceof ServerPlayer player && attacker.level() instanceof ServerLevel serverLevel) {
             ComboParry.onBlockedHit(player, attacker, serverLevel);

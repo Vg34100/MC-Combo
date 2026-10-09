@@ -25,7 +25,18 @@ public final class ComboDodge {
     private ComboDodge() {
     }
 
-    public static boolean attemptDodge(ServerPlayer player, ServerLevel level, long gameTime) {
+    public static boolean attemptDodge(ServerPlayer player, ServerLevel level, long gameTime
+            //? if <26.1 {
+            /*, float left, float forward
+            *///? }
+    ) {
+        //? if <26.1 {
+        /*// Reject invalid input before spending stamina or applying movement.
+        if (!Float.isFinite(left) || !Float.isFinite(forward)
+                || Math.abs(left) > 1.0F || Math.abs(forward) > 1.0F) {
+            return false;
+        }
+        *///? }
         Long lastDodge = LAST_DODGE_TICK.get(player.getUUID());
         if (lastDodge != null && gameTime - lastDodge < ComboConfig.dodgeCooldownTicks) {
             return false;
@@ -41,7 +52,13 @@ public final class ComboDodge {
         // bytecode, this was why every dodge fell through to the "no input" branch below).
         // getLastClientMoveIntent() is the real held-key direction, already rotated into world
         // space by the player's yaw (the same getInputVector() routine vanilla's own movement uses).
+        //? if >=26.1 {
         Vec3 moveIntent = player.getLastClientMoveIntent();
+        //? } else {
+        /*// Legacy vanilla forwards WASD to the server only while riding.
+        // Rotate the explicit local input by server yaw, then normalize below.
+        Vec3 moveIntent = new Vec3(left, 0.0D, forward).yRot(-player.getYRot() * (float) (Math.PI / 180.0D));
+        *///? }
         Vec3 direction;
         if (moveIntent.lengthSqr() > 1.0E-4) {
             direction = moveIntent.normalize();

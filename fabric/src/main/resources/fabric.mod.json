@@ -3,9 +3,9 @@
   "id": "combo",
   "version": "${version}",
   "name": "Combo",
-  "description": "Starter Architectury mod template for Minecraft 26.1.2.",
+  "description": "Melee combos, finishers, timed parries, stealth takedowns, stamina and directional dodges.",
   "authors": [
-    "Replace Me"
+    "Vg34100"
   ],
   "license": "MIT",
   "icon": "assets/combo/icon.png",
@@ -25,10 +25,10 @@
     "combo.mixins.json"
   ],
   "depends": {
-    "fabricloader": ">=0.19.3",
-    "minecraft": "26.1.2",
-    "java": ">=25",
-    "architectury": ">=20.0.0",
+    "fabricloader": ">=${fabric_loader_version}",
+    "minecraft": "${minecraft_version}",
+    "java": ">=${java_version}",
+    "architectury": ">=${architectury_api_version}",
     "fabric-api": "*"
   },
   "suggests": {

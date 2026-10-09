@@ -872,7 +872,7 @@ def main(argv=None):
             print("ERROR: doctor/bootstrap take no flags; doctor never runs Gradle or Minecraft.")
             return 2
         if not (root / "scripts/setup-environment.py").is_file():
-            print("FAIL LootExplorer setup helper missing; restore scripts/setup-environment.py in the clone.")
+            print("FAIL Combo setup helper missing; restore scripts/setup-environment.py in the clone.")
             return 2
         setup = runpy.run_path(str(root / "scripts/setup-environment.py"))
         return setup["run"](root, task_arg, globals())
@@ -911,7 +911,7 @@ def main(argv=None):
         root_pins = read_properties(project.root / "gradle.properties")
         artifact = project.root / "build/libs" / target.name / (
             f"{root_pins['archives_name']}-{target.loader}-{target.version}-{root_pins['mod_version']}.jar")
-        run_dir = Path(tempfile.gettempdir()) / "lootexplorer-release-smoke" / target.name / uuid.uuid4().hex
+        run_dir = Path(tempfile.gettempdir()) / "combo-release-smoke" / target.name / uuid.uuid4().hex
         log_dir = run_dir
         neoforge = None
         if target.loader == "neoforge":

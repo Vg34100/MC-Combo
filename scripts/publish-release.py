@@ -91,13 +91,13 @@ def publication_plan(root=ROOT):
                 raise ValueError('Invalid Fabric environment: ' + environment)
             environments = ['Client', 'Server'] if environment == '*' else [environment.title()]
         else:
-            # LootExplorer's entrypoint and every dependency are client-only.
+            # Gameplay runs on both physical sides; client hooks have their own entrypoint.
             sides = re.findall(r'^\s*side\s*=\s*"([^"]+)"', metadata, re.MULTILINE)
-            bootstrap = root / 'neoforge/src/main/java/net/vg/lootexplorer/neoforge/LootExplorerNeoForge.java'
-            if not sides or set(sides) != {'CLIENT'} or 'dist = Dist.CLIENT' not in bootstrap.read_text():
-                raise ValueError('NeoForge client-only publication differs from loader metadata/bootstrap')
-            environments = ['Client']
-        if environments != [config['environment'].title()]:
+            if not sides or set(sides) != {'BOTH'}:
+                raise ValueError('NeoForge publication differs from both-side dependency metadata')
+            environments = ['Client', 'Server']
+        expected = ['Client', 'Server'] if config['environment'] == 'both' else [config['environment'].title()]
+        if environments != expected:
             raise ValueError('Publication environment differs from actual loader metadata')
         entries.append(dict(target=matrix.stem, artifact=artifact, minecraft=minecraft, loader=loader,
                             java=int(target["java_version"]), environments=environments,
@@ -113,7 +113,6 @@ def publication_plan(root=ROOT):
                 curseforge_project_slug=config["curseforge_project_slug"],
                 mod_name=config['mod_name'],
                 modrinth_environments=dict(client_side=config['modrinth_client_side'], server_side=config['modrinth_server_side']),
-                modrinth_legacy_environments=dict(client_side=config['modrinth_legacy_client_side'], server_side=config['modrinth_legacy_server_side']),
                 mod_version=version, tag=config["github_tag"].format(mod_version=version),
                 title=config["github_title"].format(mod_version=version, mod_name=config['mod_name']),
                 changelog=match[1].strip() + "\n", entries=entries)
@@ -157,19 +156,14 @@ def check_modrinth_project(data, dry_run=False):
     if project.get('id') != data['project_id'] or project.get('slug') != data['project_slug']:
         raise ValueError('Modrinth project identity differs from publication configuration')
     if any(project.get(key) != value for key, value in data['modrinth_environments'].items()):
-        legacy = data['modrinth_legacy_environments']
-        if dry_run and all(project.get(key) == value for key, value in legacy.items()):
-            print('MODRINTH PROJECT SETTING REQUIRED before real upload: Client-only '
-                  '(client_side=required, server_side=unsupported). Historical public labels remain unchanged by this dry-run.')
-        else:
-            raise ValueError('Modrinth project environments differ; set the public project to Client-only before real upload')
+        raise ValueError('Modrinth project environments differ from publication configuration')
 
 
 def check_duplicates(data, existing=None):
     if existing is None:
         url = f"https://api.modrinth.com/v2/project/{data['project_id']}/version"
         try:
-            request = urllib.request.Request(url, headers={"User-Agent": "Vg34100/LootExplorer-release-pipeline"})
+            request = urllib.request.Request(url, headers={"User-Agent": "Vg34100/Combo-release-pipeline"})
             with urllib.request.urlopen(request, timeout=30) as response:
                 existing = json.load(response)
         except (urllib.error.URLError, ValueError) as error:
@@ -218,7 +212,7 @@ def pending_entries(data, platform):
 
 
 def get_json(url, headers=None):
-    request = urllib.request.Request(url, headers={'User-Agent': 'Vg34100/LootExplorer-release-pipeline', **(headers or {})})
+    request = urllib.request.Request(url, headers={'User-Agent': 'Vg34100/Combo-release-pipeline', **(headers or {})})
     try:
         with urllib.request.urlopen(request, timeout=30) as response:
             return json.load(response)

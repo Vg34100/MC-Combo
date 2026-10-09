@@ -14,8 +14,17 @@ public final class ComboNeoForgeRenderHooks {
     }
 
     @SubscribeEvent
+    //? if >=26.1 {
     public static void onRenderLevel(RenderLevelStageEvent.AfterLevel event) {
         ComboDamagePopups.drainAndSpawn();
         ComboStaggerEffects.drainAndRender();
     }
+    //? } else {
+    /*public static void onRenderLevel(RenderLevelStageEvent event) {
+        if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_ENTITIES) {
+            net.vg.combo.client.ComboWorldText.renderFrame(event.getPoseStack(), event.getCamera(),
+                    net.minecraft.client.Minecraft.getInstance().renderBuffers().bufferSource());
+        }
+    }
+    *///? }
 }

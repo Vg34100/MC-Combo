@@ -1,7 +1,9 @@
 package net.vg.combo.client;
 
 import net.minecraft.client.Minecraft;
+//? if >=26.1 {
 import net.minecraft.gizmos.Gizmos;
+//? }
 import net.minecraft.world.entity.Entity;
 
 import java.util.ArrayDeque;
@@ -64,9 +66,13 @@ public final class ComboDamagePopups {
             int line = Math.min(active.size(), MAX_STACK_LINES);
             active.add(now + PERSIST_MILLIS);
 
+            //? if >=26.1 {
             Gizmos.billboardTextOverMob(entity, line, pending.text(), pending.color(), pending.scale())
                     .persistForMillis(PERSIST_MILLIS)
                     .fadeOut();
+            //? } else {
+            /*ComboWorldText.addPopup(entity, line, pending.text(), pending.color(), pending.scale(), PERSIST_MILLIS);
+            *///? }
         }
     }
 

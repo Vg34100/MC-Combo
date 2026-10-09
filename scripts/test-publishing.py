@@ -45,30 +45,28 @@ class PublishingSafety(unittest.TestCase):
         self.assertEqual({r["target"] for r in data["entries"]}, {p.stem for p in (ROOT / 'gradle/matrix').glob('*.properties')})
         self.assertEqual(len({r['version_number'] for r in data['entries']}), len(data['entries']))
         self.assertEqual(len(data['entries']), 12)
-        self.assertEqual(data['project_id'], 'pVa5DTcR')
-        self.assertEqual(data['curseforge_project_id'], '1072637')
-        self.assertEqual(data['modrinth_environments'], dict(client_side='required', server_side='unsupported'))
+        self.assertEqual(data['project_id'], '7X8HTWbD')
+        self.assertEqual(data['curseforge_project_id'], '1732433')
+        self.assertEqual(data['modrinth_environments'], dict(client_side='required', server_side='required'))
         for row in data['entries']:
             loader = {'fabric': 'Fabric', 'neoforge': 'NeoForge'}[row['loader']]
-            self.assertEqual(row['version_name'], f"[{loader}] Loot Explorer {data['mod_version']} ({row['minecraft']})")
+            self.assertEqual(row['version_name'], f"[{loader}] Combo {data['mod_version']} ({row['minecraft']})")
             self.assertEqual(row['version_number'], f"{data['mod_version']}-{row['minecraft']}-{row['loader']}")
-            self.assertEqual(row['artifact'], f"build/libs/{row['target']}/LootExplorer-{row['loader']}-{row['minecraft']}-{data['mod_version']}.jar")
+            self.assertEqual(row['artifact'], f"build/libs/{row['target']}/combo-{row['loader']}-{row['minecraft']}-{data['mod_version']}.jar")
             mods = {d['mod_id'] for d in row['dependencies']}
-            self.assertEqual(mods, {'architectury', 'fabric-api', 'modmenu', 'jei'} if row['loader'] == 'fabric' else {'architectury', 'jei'})
+            self.assertEqual(mods, {'architectury', 'fabric-api', 'modmenu'} if row['loader'] == 'fabric' else {'architectury'})
             kinds = {d['mod_id']: d['dependency_type'] for d in row['dependencies']}
             self.assertEqual(kinds['architectury'], 'required')
-            self.assertEqual(kinds['jei'], 'optional')
             self.assertEqual({d['mod_id']: (d['project_id'], d['curseforge_slug']) for d in row['dependencies']},
                              {k: v for k, v in {'architectury': ('lhGA9TYQ', 'architectury-api'),
                                                'fabric-api': ('P7dR8mSH', 'fabric-api'),
-                                               'jei': ('u6dRKJwZ', 'jei'),
                                                'modmenu': ('mOgUt4GM', 'modmenu')}.items() if k in mods})
             self.assertFalse(mods & {'betterarcheology', 'resourcefulconfig', 'extrachests', 'ironchest', 'mr_dungeons_andtaverns', 'fluffytg'})
             if row['loader'] == 'fabric':
                 self.assertEqual(kinds['fabric-api'], 'required')
                 self.assertEqual(kinds['modmenu'], 'optional')
-            self.assertEqual(row['curseforge_versions'], [row['minecraft'], loader, f"Java {row['java']}", 'Client'])
-            self.assertEqual(row['environments'], ['Client'])
+            self.assertEqual(row['curseforge_versions'], [row['minecraft'], loader, f"Java {row['java']}", 'Client', 'Server'])
+            self.assertEqual(row['environments'], ['Client', 'Server'])
 
     def test_curseforge_exact_metadata_and_duplicate_guard(self):
         data = PUBLISH['publication_plan']()
@@ -77,10 +75,10 @@ class PublishingSafety(unittest.TestCase):
         PUBLISH['check_curseforge_versions'](data, versions)
         with self.assertRaisesRegex(ValueError, 'Unsupported CurseForge'):
             PUBLISH['check_curseforge_versions'](data, [v for v in versions if v['name'] != '26.2'])
-        existing = dict(id=1072637, files=[dict(id=1, display=data['entries'][0]['version_name'])])
+        existing = dict(id=1732433, files=[dict(id=1, display=data['entries'][0]['version_name'])])
         with self.assertRaisesRegex(ValueError, 'Existing CurseForge'):
             PUBLISH['check_curseforge_duplicates'](data, existing)
-        PUBLISH['check_curseforge_duplicates'](data, dict(id=1072637, files=[]))
+        PUBLISH['check_curseforge_duplicates'](data, dict(id=1732433, files=[]))
 
     def test_resume_requires_exact_artifact_receipt(self):
         import json
@@ -102,7 +100,7 @@ class PublishingSafety(unittest.TestCase):
     def test_exact_and_historical_duplicate_guards(self):
         data = PUBLISH["publication_plan"]()
         row = next(r for r in data['entries'] if r['target'] == '26.1.2-fabric')
-        for number in (row['version_number'], data['mod_version'], 'lootexplorer-' + data['mod_version'] + '-v26.1.2-fabric'):
+        for number in (row['version_number'], data['mod_version'], 'combo-' + data['mod_version'] + '-v26.1.2-fabric'):
             existing = [dict(id='synthetic-version', version_number=number, game_versions=[row['minecraft']], loaders=[row['loader']])]
             with self.assertRaisesRegex(ValueError, 'Existing Modrinth'):
                 PUBLISH['check_duplicates'](data, existing)
@@ -112,35 +110,35 @@ class PublishingSafety(unittest.TestCase):
         data = PUBLISH['publication_plan']()
         row = next(r for r in data['entries'] if r['target'] == '26.2-fabric')
         existing = dict(id='synthetic-version', version_number='historical-name',
-                        name='Loot Explorer ' + data['mod_version'], game_versions=['26.2'], loaders=['fabric'])
+                        name='Combo ' + data['mod_version'], game_versions=['26.2'], loaders=['fabric'])
         with self.assertRaisesRegex(ValueError, 'Existing Modrinth'):
             PUBLISH['check_duplicates'](data, [existing])
-        for change in ({'name': 'Loot Explorer ' + data['mod_version'] + '0'}, {'loaders': ['quilt']}, {'game_versions': ['1.20.1']}):
+        for change in ({'name': 'Combo ' + data['mod_version'] + '0'}, {'loaders': ['quilt']}, {'game_versions': ['1.20.1']}):
             PUBLISH['check_duplicates'](data, [dict(existing, **change)])
-        file = dict(id=1, name='lootexplorer-' + data['mod_version'] + '-v26.2-fabric.jar', versions=['26.2', 'Fabric'])
+        file = dict(id=1, name='combo-' + data['mod_version'] + '-v26.2-fabric.jar', versions=['26.2', 'Fabric'])
         with self.assertRaisesRegex(ValueError, 'Existing CurseForge'):
-            PUBLISH['check_curseforge_duplicates'](data, dict(id=1072637, files=[file]))
-        PUBLISH['check_curseforge_duplicates'](data, dict(id=1072637, files=[dict(file, versions=['26.2', 'Quilt'])]))
+            PUBLISH['check_curseforge_duplicates'](data, dict(id=1732433, files=[file]))
+        PUBLISH['check_curseforge_duplicates'](data, dict(id=1732433, files=[dict(file, versions=['26.2', 'Quilt'])]))
 
     def test_public_project_identity_and_environments_must_match(self):
         data = PUBLISH['publication_plan']()
         project = dict(id=data['project_id'], slug=data['project_slug'], **data['modrinth_environments'])
-        for change in ({'id': 'wrong'}, {'slug': 'wrong'}, {'server_side': 'required'}):
+        for change in ({'id': 'wrong'}, {'slug': 'wrong'}, {'server_side': 'unsupported'}):
             with patch('urllib.request.urlopen') as urlopen:
                 import json
                 urlopen.return_value.__enter__.return_value.read.return_value = json.dumps(dict(project, **change)).encode()
                 with self.assertRaises(ValueError):
                     PUBLISH['check_modrinth_project'](data)
 
-    def test_historical_environment_allowed_only_for_dry_run(self):
+    def test_environment_mismatch_rejected_even_during_dry_run(self):
         import json
         data = PUBLISH['publication_plan']()
-        project = dict(id=data['project_id'], slug=data['project_slug'], **data['modrinth_legacy_environments'])
-        with patch('urllib.request.urlopen') as urlopen, patch('builtins.print'):
+        project = dict(id=data['project_id'], slug=data['project_slug'], client_side='required', server_side='unsupported')
+        with patch('urllib.request.urlopen') as urlopen:
             urlopen.return_value.__enter__.return_value.read.return_value = json.dumps(project).encode()
-            PUBLISH['check_modrinth_project'](data, dry_run=True)
-            with self.assertRaisesRegex(ValueError, 'Client-only'):
-                PUBLISH['check_modrinth_project'](data)
+            for dry_run in (False, True):
+                with self.assertRaisesRegex(ValueError, 'environments differ'):
+                    PUBLISH['check_modrinth_project'](data, dry_run=dry_run)
 
     def test_unmapped_metadata_and_wrong_mod_namespace_fail(self):
         config = PUBLISH['properties'](ROOT / 'gradle/publishing.properties')
@@ -202,7 +200,7 @@ class PublishingSafety(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / 'gradle').mkdir()
-            (root / 'gradle.properties').write_text('mod_version=1.0.3\narchives_name=lootexplorer\n')
+            (root / 'gradle.properties').write_text('mod_version=1.0.3\narchives_name=combo\n')
             config = (ROOT / 'gradle/publishing.properties').read_text()
             (root / 'gradle/publishing.properties').write_text(config)
             with self.assertRaisesRegex(ValueError, 'release notes missing'):
@@ -216,14 +214,14 @@ class PublishingSafety(unittest.TestCase):
         verifier = runpy.run_path(str(ROOT / 'scripts/verify-matrix-artifacts.py'))
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            (root / 'gradle.properties').write_text('mod_version=1.0.3\narchives_name=LootExplorer\n')
+            (root / 'gradle.properties').write_text('mod_version=1.0.3\narchives_name=combo\n')
             matrix = root / 'gradle/matrix/1.21.1-fabric.properties'
             matrix.parent.mkdir(parents=True)
             matrix.touch()
             jars = root / 'build/libs' / matrix.stem
             jars.mkdir(parents=True)
-            old = jars / 'LootExplorer-fabric-1.21.1-1.0.2.jar'
-            expected = jars / 'LootExplorer-fabric-1.21.1-1.0.3.jar'
+            old = jars / 'combo-fabric-1.21.1-1.0.2.jar'
+            expected = jars / 'combo-fabric-1.21.1-1.0.3.jar'
             old.touch()
             with patch.dict(verifier['release_jar'].__globals__, ROOT=root):
                 with self.assertRaisesRegex(AssertionError, 'stale'):
@@ -232,7 +230,7 @@ class PublishingSafety(unittest.TestCase):
                 with self.assertRaisesRegex(AssertionError, 'one release'):
                     verifier['release_jar'](matrix)
                 old.unlink()
-                (jars / 'LootExplorer-fabric-1.21.1-1.0.3-sources.jar').touch()
+                (jars / 'combo-fabric-1.21.1-1.0.3-sources.jar').touch()
                 self.assertEqual(verifier['release_jar'](matrix), expected)
 
     def test_preflight_runs_only_the_authoritative_sequence(self):

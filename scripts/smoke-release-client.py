@@ -37,8 +37,8 @@ def neoforge_paths(target, token):
             powershell, '-NoProfile', '-Command',
             '[Console]::OutputEncoding = [Text.UTF8Encoding]::new(); $env:LOCALAPPDATA; [IO.Path]::GetTempPath()'
         ], text=True, encoding='utf-8', stderr=subprocess.PIPE, timeout=20).splitlines()
-    root = ntpath.join(temporary, 'lootexplorer-release-smoke', target, token)
-    executable = windows_path(ntpath.join(appdata, 'LootExplorer', 'tools', 'portablemc', PORTABLEMC_VERSION, 'portablemc.exe'))
+    root = ntpath.join(temporary, 'combo-release-smoke', target, token)
+    executable = windows_path(ntpath.join(appdata, 'Combo', 'tools', 'portablemc', PORTABLEMC_VERSION, 'portablemc.exe'))
     return windows_path(ntpath.join(root, 'client')), root, executable
 
 
@@ -94,7 +94,7 @@ def staged_release(run_dir, artifact, sha256):
     mod_jars = []
     for jar in jars:
         with ZipFile(jar) as zip_file:
-            if 'net/vg/lootexplorer/LootExplorer.class' in zip_file.namelist():
+            if 'net/vg/combo/Combo.class' in zip_file.namelist():
                 mod_jars.append(jar)
     expected = run_dir / 'mods' / artifact.name
     if mod_jars != [expected] or hashlib.sha256(expected.read_bytes()).hexdigest() != sha256:
@@ -158,7 +158,7 @@ def run(command, run_dir, artifact, project_root, legacy=False, neoforge=None, l
                     pid = int(re.fullmatch(r'class-load-(\d+)\.log', class_logs[0].name)[1])
                     classes = class_logs[0].read_text(errors='replace')
                     for line in classes.splitlines():
-                        if 'net.vg.lootexplorer.LootExplorer source:' in line:
+                        if 'net.vg.combo.Combo source:' in line:
                             origin = line
                             expected = run_dir / 'mods' / artifact.name
                             source = urllib.parse.urlparse(line.split(' source: ', 1)[1])
@@ -171,10 +171,10 @@ def run(command, run_dir, artifact, project_root, legacy=False, neoforge=None, l
                                     raise RuntimeError(f'Unrecognized legacy JAR origin: {line}')
                                 source_path = archive[1]
                             elif source.scheme != 'file':
-                                raise RuntimeError(f'Wrong LootExplorer code origin: {line}')
+                                raise RuntimeError(f'Wrong Combo code origin: {line}')
                             loaded = windows_path(source_path.lstrip('/')) if neoforge or os.name == 'nt' else Path(source_path)
                             if not loaded.samefile(expected):
-                                raise RuntimeError(f'Wrong LootExplorer code origin: {line}')
+                                raise RuntimeError(f'Wrong Combo code origin: {line}')
                 options = run_dir / 'options.txt'
                 marker = 'startedCleanly:true' if options.is_file() and 'startedCleanly:true' in options.read_text() else None
                 screen = 'net/minecraft/client/gui/screens/AccessibilityOnboardingScreen' if neoforge else 'net/minecraft/class_8032'

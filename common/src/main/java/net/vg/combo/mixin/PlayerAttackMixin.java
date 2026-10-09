@@ -10,11 +10,19 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+//? if >=26.1 {
 import net.minecraft.world.entity.animal.golem.IronGolem;
+//? } else {
+/*import net.minecraft.world.entity.animal.IronGolem;
+*///? }
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
 import net.minecraft.world.entity.boss.wither.WitherBoss;
 import net.minecraft.world.entity.monster.Monster;
+//? if >=26.1 {
 import net.minecraft.world.entity.npc.villager.AbstractVillager;
+//? } else {
+/*import net.minecraft.world.entity.npc.AbstractVillager;
+*///? }
 import net.minecraft.world.entity.player.Player;
 import net.vg.combo.combat.ComboCombat;
 import net.vg.combo.combat.ComboStamina;
@@ -55,13 +63,21 @@ public abstract class PlayerAttackMixin {
             method = "attack",
             at = @At(
                     value = "INVOKE",
+                    //? if >=26.1 {
                     target = "Lnet/minecraft/world/entity/Entity;hurtOrSimulate(Lnet/minecraft/world/damagesource/DamageSource;F)Z"
+                    //? } else {
+                    /*target = "Lnet/minecraft/world/entity/Entity;hurt(Lnet/minecraft/world/damagesource/DamageSource;F)Z"
+                    *///? }
             )
     )
     private boolean combo$redirectAttackDamage(Entity target, DamageSource source, float amount) {
         Player self = (Player) (Object) this;
         if (!(self instanceof ServerPlayer serverPlayer) || !(self.level() instanceof ServerLevel serverLevel)) {
+            //? if >=26.1 {
             return target.hurtOrSimulate(source, amount);
+            //? } else {
+            /*return target.hurt(source, amount);
+            *///? }
         }
 
         boolean takedown = combo$isTakedownEligible(serverPlayer, target);
@@ -74,7 +90,11 @@ public abstract class PlayerAttackMixin {
         float totalMultiplier = pending.damageMultiplier() * (takedown ? (float) ComboConfig.takedownDamageMultiplier : 1.0F);
 
         float healthBefore = target instanceof LivingEntity livingTarget ? livingTarget.getHealth() : 0.0F;
+        //? if >=26.1 {
         boolean damaged = target.hurtOrSimulate(source, amount * totalMultiplier);
+        //? } else {
+        /*boolean damaged = target.hurt(source, amount * totalMultiplier);
+        *///? }
         ComboCombat.ConfirmResult result = ComboCombat.confirmAttack(serverPlayer, pending, damaged);
 
         COMBO_LOGGER.debug(
@@ -87,7 +107,7 @@ public abstract class PlayerAttackMixin {
             // pre-mitigation `amount` float above.
             float dealt = healthBefore - livingTarget.getHealth();
             if (dealt > 0.0F) {
-                serverPlayer.awardStat(ComboStats.DAMAGE_DEALT.value(), Math.round(dealt));
+                serverPlayer.awardStat(ComboStats.DAMAGE_DEALT.get(), Math.round(dealt));
                 NetworkManager.sendToPlayer(serverPlayer,
                         new ComboDamagePopupPayload(target.getId(), dealt, result.finisher()));
             }
@@ -104,10 +124,10 @@ public abstract class PlayerAttackMixin {
         }
 
         if (result.advanced()) {
-            serverPlayer.awardStat(ComboStats.HITS_LANDED.value(), 1);
+            serverPlayer.awardStat(ComboStats.HITS_LANDED.get(), 1);
             NetworkManager.sendToPlayer(serverPlayer, new ComboSyncPayload(result.stage(), result.remainingTicks(), result.finisher()));
             if (result.finisher()) {
-                serverPlayer.awardStat(ComboStats.FINISHERS_LANDED.value(), 1);
+                serverPlayer.awardStat(ComboStats.FINISHERS_LANDED.get(), 1);
                 ComboCombat.applyFinisherFeedback(serverPlayer, target, serverLevel);
             }
         }

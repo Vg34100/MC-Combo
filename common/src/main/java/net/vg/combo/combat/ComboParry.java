@@ -57,7 +57,12 @@ public final class ComboParry {
         double lengthSq = dx * dx + dz * dz;
         if (lengthSq > 1.0E-4) {
             double length = Math.sqrt(lengthSq);
+            //? if >=26.2 {
+            /*attacker.knockback(ComboConfig.parryKnockback, dx / length, dz / length,
+                    defender.damageSources().playerAttack(defender), 0.0F, true);
+            *///? } else {
             attacker.knockback(ComboConfig.parryKnockback, dx / length, dz / length);
+            //? }
         }
 
         ComboCombat.applyStagger(attacker, level);

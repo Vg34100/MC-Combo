@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify LootExplorer's installable matrix JARs, not gameplay behavior."""
+"""Verify Combo's installable matrix JARs, not gameplay behavior."""
 import json
 from pathlib import Path
 import re
@@ -12,8 +12,8 @@ except ImportError:  # The established wrapper also supports Python 3.10.
     tomllib = None
 
 ROOT = Path(__file__).resolve().parents[1]
-MOD_ID = 'lootexplorer'
-PACKAGE = 'net/vg/lootexplorer/'
+MOD_ID = 'combo'
+PACKAGE = 'net/vg/combo/'
 
 
 def properties(path):
@@ -53,12 +53,17 @@ def inspect(matrix):
         assert len(entries) == len(files), 'Duplicate archive entries'
         read_json = lambda name: json.loads(jar.read(name))
         required_classes = (
-            'LootExplorer', 'config/LootExplorerConfig', 'client/LootExplorerConfigScreen',
-            'inventory/LootPreviewScreen', 'inventory/LootPreviewMenu', 'util/ModKeyMaps',
-            'util/LootHandler', 'item/ModItemGroups', 'compat/jei/LootExplorerJeiPlugin',
+            'Combo', 'config/ComboConfig', 'client/ComboConfigScreen', 'client/ComboHud',
+            'client/ComboDamagePopups', 'client/ComboStaggerEffects', 'client/ComboVignetteEffects',
+            'client/ComboDodgeClient', 'combat/ComboCombat', 'combat/ComboState',
+            'combat/ComboParry', 'combat/ComboStamina', 'combat/ComboDodge', 'combat/WeaponCategory',
+            'stats/ComboStats', 'network/ComboSyncPayload', 'network/ComboDamagePopupPayload',
+            'network/ComboStaggerPayload', 'network/ComboBackstabPayload',
+            'network/ComboStaminaPayload', 'network/ComboDodgeRequestPayload',
         )
         for name in required_classes:
             assert PACKAGE + name + '.class' in files, f'Missing mod class: {name}'
+        assert (PACKAGE + 'client/ComboWorldText.class' in files) == legacy, 'Wrong world-text compatibility implementation'
         classes = [name for name in files if name.endswith('.class')]
         assert classes and all(name.startswith(PACKAGE) for name in classes), 'Bundled dependency classes'
         assert all(name.split('/')[1] == MOD_ID for name in files
@@ -70,12 +75,12 @@ def inspect(matrix):
         for name in files:
             if name.endswith('.json'):
                 read_json(name)
-        mixins = read_json('lootexplorer.mixins.json')
+        mixins = read_json('combo.mixins.json')
         assert mixins['required'] is True
         assert mixins['compatibilityLevel'] == 'JAVA_' + pins['java_version']
-        # The canonical baseline registers no injections; dormant helpers stay dormant.
-        assert mixins['client'] == [] and mixins['mixins'] == [], 'Unexpected active mixins'
-        assert mixins['package'] == 'net.vg.lootexplorer.mixin'
+        assert mixins['mixins'] == ['PlayerAttackMixin', 'LivingEntityBlockMixin', 'BlocksAttacksMixin', 'StealthVisibilityMixin'], 'Missing combat injections'
+        assert not mixins.get('client') and not mixins.get('server')
+        assert mixins['package'] == 'net.vg.combo.mixin'
         for side in ('mixins', 'client', 'server'):
             for mixin in mixins.get(side, []):
                 name = (mixins['package'] + '.' + mixin).replace('.', '/') + '.class'
@@ -89,13 +94,13 @@ def inspect(matrix):
             for dep, pin in (('java', 'java_version'), ('fabricloader', 'fabric_loader_version'),
                              ('architectury', 'architectury_api_version')):
                 assert meta['depends'][dep] == '>=' + pins[pin], f'Wrong dependency: {dep}'
-            assert meta['suggests'] == {'modmenu': '*', 'jei': '*'}
-            assert meta['mixins'] == ['lootexplorer.mixins.json']
-            assert meta['environment'] == 'client'
+            assert meta['suggests'] == {'modmenu': '*'}
+            assert meta['mixins'] == ['combo.mixins.json']
+            assert meta['environment'] == '*'
             assert meta['entrypoints'] == {
-                'main': ['net.vg.lootexplorer.fabric.LootExplorerFabric'],
-                'client': ['net.vg.lootexplorer.fabric.client.LootExplorerFabricClient'],
-                'modmenu': ['net.vg.lootexplorer.fabric.client.LootExplorerModMenu'],
+                'main': ['net.vg.combo.fabric.ComboFabric'],
+                'client': ['net.vg.combo.fabric.client.ComboFabricClient'],
+                'modmenu': ['net.vg.combo.fabric.client.ComboModMenu'],
             }
             for names in meta['entrypoints'].values():
                 for name in names:
@@ -103,37 +108,36 @@ def inspect(matrix):
             assert meta['icon'] in files
             assert 'accessWidener' not in meta
             if legacy:
-                assert b'net/minecraft/class_' in jar.read(PACKAGE + 'inventory/LootPreviewScreen.class'), 'Unremapped Fabric release'
+                assert b'net/minecraft/class_' in jar.read(PACKAGE + 'client/ComboHud.class'), 'Unremapped Fabric release'
 
         else:
             assert 'fabric.mod.json' not in files, 'Wrong loader metadata'
             meta = jar.read('META-INF/neoforge.mods.toml').decode()
             assert quoted(meta, 'modId') == MOD_ID
             assert quoted(meta, 'version') == root_pins['mod_version']
-            assert PACKAGE + 'neoforge/LootExplorerNeoForge.class' in files
-            blocks = re.findall(r'\[\[dependencies\.lootexplorer\]\](.*?)(?=\n\[|\Z)', meta, re.DOTALL)
+            assert PACKAGE + 'neoforge/ComboNeoForge.class' in files
+            assert PACKAGE + 'neoforge/client/ComboNeoForgeClient.class' in files
+            bootstrap = jar.read(PACKAGE + 'neoforge/ComboNeoForge.class')
+            assert b'net/minecraft/client/' not in bootstrap and b'net/neoforged/neoforge/client/' not in bootstrap, 'Client types in dedicated-server bootstrap'
+            assert b'CLIENT' in jar.read(PACKAGE + 'neoforge/client/ComboNeoForgeClient.class'), 'Unrestricted client bootstrap'
+            blocks = re.findall(r'\[\[dependencies\.combo\]\](.*?)(?=\n\[|\Z)', meta, re.DOTALL)
             deps = {quoted(block, 'modId'): block for block in blocks}
-            assert set(deps) == {'minecraft', 'neoforge', 'architectury', 'jei'}
+            assert set(deps) == {'minecraft', 'neoforge', 'architectury'}
             assert quoted(deps['minecraft'], 'versionRange') == '[' + pins['minecraft_version'] + ']'
             for dep, pin in (('neoforge', 'neoforge_version'), ('architectury', 'architectury_api_version')):
                 assert quoted(deps[dep], 'versionRange') == '[' + pins[pin] + ',)'
             assert all(quoted(deps[dep], 'type') == 'required' for dep in ('minecraft', 'neoforge', 'architectury'))
-            assert quoted(deps['jei'], 'type') == 'optional'
-            assert quoted(deps['jei'], 'versionRange') == '[' + pins['jei_version'] + ',)'
-            assert all(quoted(block, 'side') == 'CLIENT' for block in deps.values())
-            assert quoted(meta, 'displayTest') == 'IGNORE_ALL_VERSION'
-            assert b'CLIENT' in jar.read(PACKAGE + 'neoforge/LootExplorerNeoForge.class'), 'Missing client-only bootstrap'
+            assert all(quoted(block, 'side') == 'BOTH' for block in deps.values())
             if tomllib is not None:
                 tomllib.loads(meta)
             assert quoted(meta, 'javaVersion') == '[' + pins['java_version'] + ',)'
             icon_field = 'iconFile' if pins['minecraft_version'] == '26.2' else 'logoFile'
             assert quoted(meta, icon_field) in files
-            assert quoted(meta, 'config') == 'lootexplorer.mixins.json'
-        assert 'assets/lootexplorer/lang/en_us.json' in files
-        assert jar.read('META-INF/services/mezz.jei.api.IModPlugin').decode().strip() == 'net.vg.lootexplorer.compat.jei.LootExplorerJeiPlugin'
+            assert quoted(meta, 'config') == 'combo.mixins.json'
+        assert 'assets/combo/lang/en_us.json' in files
         assert any(name.startswith('LICENSE') for name in files)
         assert not any(name.endswith(('.jar', '.java')) for name in files), 'Embedded JAR or source archive'
-        for name in ('fabric.mod.json', 'META-INF/neoforge.mods.toml', 'lootexplorer.mixins.json'):
+        for name in ('fabric.mod.json', 'META-INF/neoforge.mods.toml', 'combo.mixins.json'):
             if name in files:
                 assert b'${' not in jar.read(name), f'Unexpanded metadata: {name}'
     print(f'{matrix.stem}: release metadata, classes, mixins and resources OK')

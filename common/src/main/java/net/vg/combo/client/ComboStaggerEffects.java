@@ -1,8 +1,10 @@
 package net.vg.combo.client;
 
 import net.minecraft.client.Minecraft;
+//? if >=26.1 {
 import net.minecraft.gizmos.Gizmos;
 import net.minecraft.gizmos.TextGizmo;
+//? }
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 
@@ -68,12 +70,18 @@ public final class ComboStaggerEffects {
         double centerX = entity.getX();
         double centerZ = entity.getZ();
 
+        //? if >=26.1 {
         TextGizmo.Style style = TextGizmo.Style.forColorAndCentered(STAR_COLOR).withScale(STAR_SCALE);
+        //? }
         for (int i = 0; i < STAR_COUNT; i++) {
             double angle = baseAngle + (Math.PI * 2.0D / STAR_COUNT) * i;
             double x = centerX + Math.cos(angle) * ORBIT_RADIUS;
             double z = centerZ + Math.sin(angle) * ORBIT_RADIUS;
+            //? if >=26.1 {
             Gizmos.billboardText("✦", new Vec3(x, headY, z), style).setAlwaysOnTop();
+            //? } else {
+            /*ComboWorldText.draw("✦", new Vec3(x, headY, z), STAR_COLOR, STAR_SCALE);
+            *///? }
         }
     }
 }

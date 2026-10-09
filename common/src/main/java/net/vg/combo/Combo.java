@@ -36,9 +36,11 @@ public final class Combo {
         ComboConfig.registerConfigs();
         ComboStats.register();
 
-        // A single registerReceiver call registers the payload type on every environment
-        // and wires the actual receiver only where it will ever fire (the physical client).
-        // Registering the type again via registerS2CPayloadType would double-register it.
+        // Current Architectury registers S2C types on both physical sides. Its legacy
+        // Fabric receiver adaptor is client-only, so dedicated servers register types instead.
+        //? if <26.1 {
+        /*if (dev.architectury.platform.Platform.getEnvironment() == dev.architectury.utils.Env.CLIENT) {
+        *///? }
         NetworkManager.registerReceiver(NetworkManager.s2c(), ComboSyncPayload.TYPE, ComboSyncPayload.STREAM_CODEC,
                 (payload, context) -> context.queue(() ->
                         ComboClientState.update(payload.stage(), payload.remainingTicks(), payload.finisher())));
@@ -67,11 +69,25 @@ public final class Combo {
         NetworkManager.registerReceiver(NetworkManager.s2c(), ComboStaminaPayload.TYPE, ComboStaminaPayload.STREAM_CODEC,
                 (payload, context) -> context.queue(() -> ComboStaminaClient.update(payload.current(), payload.max())));
 
+        //? if <26.1 {
+        /*} else {
+            NetworkManager.registerS2CPayloadType(ComboSyncPayload.TYPE, ComboSyncPayload.STREAM_CODEC);
+            NetworkManager.registerS2CPayloadType(ComboDamagePopupPayload.TYPE, ComboDamagePopupPayload.STREAM_CODEC);
+            NetworkManager.registerS2CPayloadType(ComboStaggerPayload.TYPE, ComboStaggerPayload.STREAM_CODEC);
+            NetworkManager.registerS2CPayloadType(ComboBackstabPayload.TYPE, ComboBackstabPayload.STREAM_CODEC);
+            NetworkManager.registerS2CPayloadType(ComboStaminaPayload.TYPE, ComboStaminaPayload.STREAM_CODEC);
+        }
+        *///? }
+
         NetworkManager.registerReceiver(NetworkManager.c2s(), ComboDodgeRequestPayload.TYPE, ComboDodgeRequestPayload.STREAM_CODEC,
                 (payload, context) -> context.queue(() -> {
                     if (context.getPlayer() instanceof ServerPlayer serverPlayer
                             && serverPlayer.level() instanceof ServerLevel serverLevel) {
+                        //? if >=26.1 {
                         ComboDodge.attemptDodge(serverPlayer, serverLevel, serverLevel.getGameTime());
+                        //? } else {
+                        /*ComboDodge.attemptDodge(serverPlayer, serverLevel, serverLevel.getGameTime(), payload.left(), payload.forward());
+                        *///? }
                     }
                 }));
 

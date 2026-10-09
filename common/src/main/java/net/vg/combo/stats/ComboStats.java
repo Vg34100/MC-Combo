@@ -34,8 +34,8 @@ public final class ComboStats {
     }
 
     private static void registerFormatters() {
-        Stats.CUSTOM.get(HITS_LANDED.value(), StatFormatter.DEFAULT);
-        Stats.CUSTOM.get(FINISHERS_LANDED.value(), StatFormatter.DEFAULT);
-        Stats.CUSTOM.get(DAMAGE_DEALT.value(), StatFormatter.DEFAULT);
+        Stats.CUSTOM.get(HITS_LANDED.get(), StatFormatter.DEFAULT);
+        Stats.CUSTOM.get(FINISHERS_LANDED.get(), StatFormatter.DEFAULT);
+        Stats.CUSTOM.get(DAMAGE_DEALT.get(), StatFormatter.DEFAULT);
     }
 }

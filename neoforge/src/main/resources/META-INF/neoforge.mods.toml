@@ -2,34 +2,37 @@ modLoader = "javafml"
 loaderVersion = "[2,)"
 license = "MIT"
 
+[features.combo]
+javaVersion = "[${java_version},)"
+
 [[mods]]
 modId = "combo"
 version = "${version}"
 displayName = "Combo"
-authors = "Replace Me"
+authors = "Vg34100"
 description = '''
-Starter Architectury mod template for Minecraft 26.1.2.
+Melee combos, finishers, timed parries, stealth takedowns, stamina and directional dodges.
 '''
-logoFile = "icon.png"
+${neoforge_icon_field} = "assets/combo/icon.png"
 
 [[dependencies.combo]]
 modId = "neoforge"
 type = "required"
-versionRange = "[26,)"
+versionRange = "[${neoforge_version},)"
 ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.combo]]
 modId = "minecraft"
 type = "required"
-versionRange = "[26.1.2,)"
+versionRange = "[${minecraft_version}]"
 ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.combo]]
 modId = "architectury"
 type = "required"
-versionRange = "[20.0.0,)"
+versionRange = "[${architectury_api_version},)"
 ordering = "AFTER"
 side = "BOTH"
 

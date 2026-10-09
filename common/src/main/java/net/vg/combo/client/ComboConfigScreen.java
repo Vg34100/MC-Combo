@@ -254,7 +254,11 @@ public final class ComboConfigScreen extends OptionsSubScreen {
     @Override
     public void onClose() {
         ComboConfig.saveConfigs();
+        //? if >=26.2 {
+        /*this.minecraft.gui.setScreen(this.lastScreen);
+        *///? } else {
         this.minecraft.setScreen(this.lastScreen);
+        //? }
     }
 
     private static OptionInstance<Double> doubleOption(String key, double min, double max, int steps,
@@ -266,8 +270,10 @@ public final class ComboConfigScreen extends OptionsSubScreen {
                 (optionText, value) -> genericValue(optionText, format.apply(value)),
                 new OptionInstance.IntRange(0, steps).xmap(
                         sliderValue -> min + (max - min) * sliderValue / steps,
-                        value -> (int) Math.round((value - min) / (max - min) * steps),
-                        true
+                        value -> (int) Math.round((value - min) / (max - min) * steps)
+                        //? if >=26.1 {
+                        , true
+                        //? }
                 ),
                 Codec.doubleRange(min, max),
                 current,
