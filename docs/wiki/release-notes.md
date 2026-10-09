@@ -1,7 +1,12 @@
 # Combo release notes
 
-The next release version and its notes will be selected in a separate publishing session.
-Existing 0.1.0 uploads must remain untouched.
+## 0.1.1
+
+- Adds Fabric and NeoForge builds for Minecraft 1.21, 1.21.1, 26.1, 26.1.1,
+  26.1.2, and 26.2.
+- Requires Java 21 on Minecraft 1.21.x and Java 25 on Minecraft 26.x.
+- Architectury is required on both loaders. Fabric also requires Fabric API;
+  Mod Menu remains optional.
 
 ## 0.1.0
 

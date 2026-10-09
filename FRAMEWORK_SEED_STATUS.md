@@ -14,6 +14,13 @@ both client/server environments, and actual required/optional dependencies. The
 published `0.1.0` version is unchanged and duplicate uploads are rejected. No platform
 upload, release tag, or GitHub Release was created during migration.
 
-The separate publishing session must choose the next version and release notes,
-complete the manual regressions, and run the established dry-run/preflight process
-before any explicitly authorized publication.
+Release `0.1.1` has now been prepared with its version and release notes synchronized.
+The full publication preflight passed: 12 packaged/verified artifacts, four
+representative installed-client smokes, and 12 official upload payload dry-runs on
+each platform. Manual gameplay/visual checks remain documented in the migration
+ledger; the release notes make no new gameplay-fix claims.
+
+Real publication uses the established sequential, receipt-backed uploads of those
+exact verified JARs. Push the matching release tag only after the external platform
+uploads succeed; the tag workflow creates the GitHub Release without republishing
+Modrinth or CurseForge.
