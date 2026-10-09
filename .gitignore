@@ -103,6 +103,12 @@ $RECYCLE.BIN/
 .gradle
 build/
 
+# Local publication credentials
+.env
+.env.*
+!.env.example
+__pycache__/
+
 # Ignore Gradle GUI config
 gradle-app.setting
 
