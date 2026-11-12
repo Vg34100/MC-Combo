@@ -21,6 +21,10 @@ def minecraftVersion = required('minecraft_version')
 def javaVersion = required('java_version') as int
 def legacy = required('loom_generation') == 'legacy'
 def isFabric = loader == 'fabric'
+def isForge = loader == 'forge'
+if (isForge && (!legacy || minecraftVersion != '1.20.1' || javaVersion != 17)) {
+    throw new GradleException('Forge requires Minecraft 1.20.1, legacy remapping and Java 17')
+}
 
 
 group = rootProject.maven_group
@@ -28,7 +32,8 @@ version = rootProject.mod_version
 apply plugin: legacy ? 'dev.architectury.loom' : 'dev.architectury.loom-no-remap'
 // Each node already owns common + loader sources. Architectury API remains a
 // dependency, but no common-project transformation/Gradle plugin is required.
-if (!isFabric) loom { neoForge {} }
+if (loader == 'neoforge') loom { neoForge {} }
+if (isForge) loom { forge { mixinConfig 'combo.mixins.json' } }
 if (legacy) loom { silentMojangMappingsLicense() }
 
 // Exact, bidirectional class rename; gameplay stays in the canonical Java files.
@@ -44,6 +49,7 @@ base { archivesName = "${rootProject.archives_name}-${loader}-${minecraftVersion
 repositories {
     maven { url 'https://maven.terraformersmc.com/releases/' }
     maven { url 'https://maven.neoforged.net/releases/' }
+    maven { url 'https://maven.minecraftforge.net/' }
 }
 
 sourceSets.main {
@@ -139,6 +145,9 @@ dependencies {
     if (isFabric) {
         modDependency("net.fabricmc:fabric-loader:${required('fabric_loader_version')}")
         modDependency("net.fabricmc.fabric-api:fabric-api:${required('fabric_api_version')}")
+    } else if (isForge) {
+        forge "net.minecraftforge:forge:${minecraftVersion}-${required('forge_version')}"
+        compileOnly "net.fabricmc:fabric-loader:${required('fabric_loader_version')}"
     } else {
         neoForge "net.neoforged:neoforge:${required('neoforge_version')}"
         // Common client annotations compile against Fabric Loader on both loaders.
@@ -164,13 +173,14 @@ def metadata = [
     architectury_api_version: required('architectury_api_version'),
     fabric_loader_version: required('fabric_loader_version'),
     neoforge_version: matrix.getProperty('neoforge_version', ''),
+    forge_version: matrix.getProperty('forge_version', ''),
     neoforge_icon_field: stonecutter.eval(minecraftVersion, '>=26.2') ? 'iconFile' : 'logoFile'
 ]
 processResources {
     // Canonical resources take priority over checked-in datagen duplicates.
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     inputs.properties(metadata)
-    filesMatching(['fabric.mod.json', 'META-INF/neoforge.mods.toml', '*.mixins.json']) { expand(metadata) }
+    filesMatching(['fabric.mod.json', 'META-INF/neoforge.mods.toml', 'META-INF/mods.toml', '*.mixins.json']) { expand(metadata) }
 }
 apply from: rootProject.file('gradle/resource-compat.gradle')
 
@@ -191,6 +201,7 @@ tasks.register('verifyLaunchSetup') {
 }
 
 tasks.named('jar') {
+    if (isForge) manifest.attributes('MixinConfigs': 'combo.mixins.json')
     destinationDirectory = rootProject.layout.buildDirectory.dir("libs/${project.name}")
     from(rootProject.file('LICENSE.txt')) { rename { "${it}_${rootProject.archives_name}" } }
 }
@@ -212,7 +223,7 @@ if (providers.gradleProperty('publish_manifest').isPresent()) {
 
 // Stage ordinary installed mods for either production launcher. Dependencies
 // come from their original artifacts, never Loom's remapped development cache.
-if (isFabric || loader == 'neoforge') {
+if (isFabric || loader in ['forge', 'neoforge']) {
     def smokeRun = layout.dir(providers.gradleProperty('release_smoke_dir').map { rootProject.file(it) })
     def smokeDependencies = configurations.create('releaseSmokeMods') {
         canBeConsumed = false

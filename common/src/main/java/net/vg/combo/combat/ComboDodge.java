@@ -77,7 +77,7 @@ public final class ComboDodge {
         // explicitly is the same mechanism vanilla uses for explosion/knockback-on-self.
         player.connection.send(new ClientboundSetEntityMotionPacket(player));
 
-        player.setInvulnerable(true);
+        setInvulnerable(player, true);
         INVULNERABLE_UNTIL_TICK.put(player.getUUID(), gameTime + ComboConfig.dodgeInvulnerabilityTicks);
 
         level.playSound(null, player.getX(), player.getY(), player.getZ(),
@@ -90,7 +90,7 @@ public final class ComboDodge {
     public static void tick(ServerPlayer player, long gameTime) {
         Long until = INVULNERABLE_UNTIL_TICK.get(player.getUUID());
         if (until != null && gameTime >= until) {
-            player.setInvulnerable(false);
+            setInvulnerable(player, false);
             INVULNERABLE_UNTIL_TICK.remove(player.getUUID());
         }
     }
@@ -99,7 +99,15 @@ public final class ComboDodge {
         UUID id = player.getUUID();
         LAST_DODGE_TICK.remove(id);
         if (INVULNERABLE_UNTIL_TICK.remove(id) != null && player instanceof ServerPlayer serverPlayer) {
-            serverPlayer.setInvulnerable(false);
+            setInvulnerable(serverPlayer, false);
         }
+    }
+
+    private static void setInvulnerable(ServerPlayer player, boolean value) {
+        //? if >=26.3 {
+        /*player.setPermanentlyInvulnerable(value);
+        *///? } else {
+        player.setInvulnerable(value);
+        //? }
     }
 }

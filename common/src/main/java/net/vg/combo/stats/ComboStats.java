@@ -15,15 +15,15 @@ public final class ComboStats {
 
     public static final RegistrySupplier<Identifier> HITS_LANDED =
             CUSTOM_STATS.register("hits_landed",
-                    () -> Identifier.fromNamespaceAndPath(Combo.MOD_ID, "hits_landed"));
+                    () -> net.vg.combo.util.ComboIds.id("hits_landed"));
 
     public static final RegistrySupplier<Identifier> FINISHERS_LANDED =
             CUSTOM_STATS.register("finishers_landed",
-                    () -> Identifier.fromNamespaceAndPath(Combo.MOD_ID, "finishers_landed"));
+                    () -> net.vg.combo.util.ComboIds.id("finishers_landed"));
 
     public static final RegistrySupplier<Identifier> DAMAGE_DEALT =
             CUSTOM_STATS.register("damage_dealt",
-                    () -> Identifier.fromNamespaceAndPath(Combo.MOD_ID, "damage_dealt"));
+                    () -> net.vg.combo.util.ComboIds.id("damage_dealt"));
 
     private ComboStats() {
     }

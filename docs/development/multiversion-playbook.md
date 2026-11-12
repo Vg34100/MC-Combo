@@ -9,6 +9,8 @@ Move a working Architectury/Fabric/NeoForge mod into one maintainable Stonecutte
 Current suite target set:
 
 ```text
+1.20.1-fabric
+1.20.1-forge
 1.21-fabric
 1.21-neoforge
 1.21.1-fabric
@@ -21,6 +23,8 @@ Current suite target set:
 26.1.2-neoforge
 26.2-fabric
 26.2-neoforge
+26.3-fabric
+26.3-neoforge
 ```
 
 ## Architecture
@@ -33,6 +37,7 @@ gradle/matrix/*.properties
 
 common/
 fabric/
+forge/
 neoforge/
 
 gradle/compat/             # only when real divergence requires it
@@ -74,7 +79,7 @@ Do not repeatedly rebuild the baseline after recording it unless later evidence 
 
 Use compiler/runtime failures from representative shapes to discover boundaries.
 
-Do not attack all 12 nodes at once.
+Do not attack all 16 nodes at once.
 
 Add another sentinel only if a target introduces a unique compatibility mechanism.
 

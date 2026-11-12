@@ -40,8 +40,8 @@ def dependencies(metadata, loader, pins, config):
         declared = {}
         for block in blocks:
             fields = dict(re.findall(r'^\s*(\w+)\s*=\s*"([^"\n]*)"', block, re.MULTILINE))
-            declared[fields["modId"]] = fields["type"]
-    for key in ("minecraft", "java", "fabricloader", "neoforge"):
+            declared[fields["modId"]] = ("required" if re.search(r"^mandatory\s*=\s*true\s*$", block, re.MULTILINE) else "optional") if loader == "forge" else fields["type"]
+    for key in ("minecraft", "java", "fabricloader", "forge", "neoforge"):
         declared.pop(key, None)
     result = []
     for mod_id, kind in sorted(declared.items()):
@@ -77,13 +77,13 @@ def publication_plan(root=ROOT):
     for matrix in sorted((root / "gradle/matrix").glob("*.properties")):
         target = properties(matrix)
         minecraft, loader = target["minecraft_version"], target["loader"]
-        if matrix.stem != f"{minecraft}-{loader}" or loader not in ("fabric", "neoforge"):
+        if matrix.stem != f"{minecraft}-{loader}" or loader not in ("fabric", "forge", "neoforge"):
             raise ValueError(f"Invalid publishing target: {matrix}")
         values = dict(mod_version=version, mod_name=config['mod_name'], minecraft_version=minecraft, loader=loader,
-                      loader_name={"fabric": "Fabric", "neoforge": "NeoForge"}[loader])
+                      loader_name={"fabric": "Fabric", "forge": "Forge", "neoforge": "NeoForge"}[loader])
         artifact = f"build/libs/{matrix.stem}/{pins['archives_name']}-{loader}-{minecraft}-{version}.jar"
         source = root / loader / "src/main/resources" / (
-            "fabric.mod.json" if loader == "fabric" else "META-INF/neoforge.mods.toml")
+            {"fabric": "fabric.mod.json", "forge": "META-INF/mods.toml", "neoforge": "META-INF/neoforge.mods.toml"}[loader])
         metadata = source.read_text(encoding="utf-8")
         if loader == 'fabric':
             environment = json.loads(metadata).get('environment', '*')
@@ -138,7 +138,7 @@ def verified_plan(root=ROOT):
         if artifact.resolve() != (root / row["artifact"]).resolve():
             raise ValueError(f"Unexpected verified artifact: {artifact}")
         with ZipFile(artifact) as jar:
-            meta = jar.read("fabric.mod.json" if row["loader"] == "fabric" else "META-INF/neoforge.mods.toml").decode()
+            meta = jar.read({"fabric": "fabric.mod.json", "forge": "META-INF/mods.toml", "neoforge": "META-INF/neoforge.mods.toml"}[row["loader"]]).decode()
         actual = dependencies(meta, row["loader"], properties(matrix), config)
         if actual != row["dependencies"]:
             raise ValueError(f"Packaged dependency metadata differs from publication plan: {row['target']}")
@@ -248,7 +248,7 @@ def check_curseforge_duplicates(data, existing=None):
             names = [file.get('name', ''), file.get('display', '')]
             semantic = (any(has_mod_version(name, data['mod_version']) for name in names)
                         and row['minecraft'] in file.get('versions', [])
-                        and {'fabric': 'Fabric', 'neoforge': 'NeoForge'}[row['loader']] in file.get('versions', []))
+                        and {'fabric': 'Fabric', 'forge': 'Forge', 'neoforge': 'NeoForge'}[row['loader']] in file.get('versions', []))
             if file.get('name') in (row['version_name'], Path(row['artifact']).name) or file.get('display') == row['version_name'] or semantic:
                 raise ValueError(f'Existing CurseForge file for {row["target"]}: {file["id"]}; refusing duplicate upload')
 

@@ -1,6 +1,8 @@
 package net.vg.combo.client;
 
+//? if >=1.21 {
 import net.minecraft.client.DeltaTracker;
+//? }
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.vg.combo.combat.ComboCombat;
 
@@ -31,7 +33,13 @@ public final class ComboHud {
     private ComboHud() {
     }
 
-    public static void render(GuiGraphicsExtractor guiGraphics, DeltaTracker deltaTracker) {
+    public static void render(GuiGraphicsExtractor guiGraphics,
+            //? if >=1.21 {
+            DeltaTracker deltaTracker
+            //? } else {
+            /*float partialTick
+            *///? }
+    ) {
         ComboVignetteEffects.render(guiGraphics);
         renderStaminaBar(guiGraphics);
 
