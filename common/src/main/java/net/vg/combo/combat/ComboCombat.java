@@ -1,6 +1,6 @@
 package net.vg.combo.combat;
 
-import dev.architectury.networking.NetworkManager;
+import net.vg.combo.network.ComboNetworking;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -185,7 +185,7 @@ public final class ComboCombat {
 
         // Display preference is read client-side (see Combo.java's receiver) rather than gated
         // here, since the server's own config copy isn't necessarily the attacking player's.
-        NetworkManager.sendToPlayer(player, new ComboBackstabPayload());
+        ComboNetworking.sendToPlayer(player, new ComboBackstabPayload());
     }
 
     /** Reused by both the finisher payoff and a successful parry. */
@@ -198,7 +198,7 @@ public final class ComboCombat {
         target.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, duration, ComboConfig.staggerSlownessAmplifier));
         target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, duration, ComboConfig.staggerWeaknessAmplifier));
 
-        NetworkManager.sendToPlayers(
+        ComboNetworking.sendToPlayers(
                 level.getPlayers(p -> p.distanceToSqr(target) <= STAGGER_VISUAL_RADIUS * STAGGER_VISUAL_RADIUS),
                 new ComboStaggerPayload(target.getId(), duration));
     }
@@ -220,7 +220,7 @@ public final class ComboCombat {
 
             float dealt = healthBefore - nearby.getHealth();
             if (dealt > 0.0F) {
-                NetworkManager.sendToPlayer(player, new ComboDamagePopupPayload(nearby.getId(), dealt, false));
+                ComboNetworking.sendToPlayer(player, new ComboDamagePopupPayload(nearby.getId(), dealt, false));
             }
         }
     }

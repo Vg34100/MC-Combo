@@ -1,5 +1,29 @@
 [
   {
+    "label": "MC: 1.20.1 Fabric",
+    "command": "python",
+    "args": [
+      "build-smart.py",
+      ":1.20.1-fabric:runClient"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "use_new_terminal": true,
+    "allow_concurrent_runs": false,
+    "reveal": "always"
+  },
+  {
+    "label": "MC: 1.20.1 Forge",
+    "command": "python",
+    "args": [
+      "build-smart.py",
+      ":1.20.1-forge:runClient"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "use_new_terminal": true,
+    "allow_concurrent_runs": false,
+    "reveal": "always"
+  },
+  {
     "label": "MC: 1.21 Fabric",
     "command": "python",
     "args": [
@@ -137,6 +161,30 @@
     "args": [
       "build-smart.py",
       ":26.2-neoforge:runClient"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "use_new_terminal": true,
+    "allow_concurrent_runs": false,
+    "reveal": "always"
+  },
+  {
+    "label": "MC: 26.3 Fabric",
+    "command": "python",
+    "args": [
+      "build-smart.py",
+      ":26.3-fabric:runClient"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "use_new_terminal": true,
+    "allow_concurrent_runs": false,
+    "reveal": "always"
+  },
+  {
+    "label": "MC: 26.3 NeoForge",
+    "command": "python",
+    "args": [
+      "build-smart.py",
+      ":26.3-neoforge:runClient"
     ],
     "cwd": "$ZED_WORKTREE_ROOT",
     "use_new_terminal": true,

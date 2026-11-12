@@ -30,6 +30,9 @@ public abstract class LivingEntityBlockMixin {
             //? if >=26.2 {
             /*DamageSource source, float damage,
             *///? }
+            //? if >=26.3 {
+            /*boolean fullyBlocked,
+            *///? }
             CallbackInfo ci) {
         LivingEntity attacker = (LivingEntity) (Object) this;
         if (defender instanceof ServerPlayer player && attacker.level() instanceof ServerLevel serverLevel) {

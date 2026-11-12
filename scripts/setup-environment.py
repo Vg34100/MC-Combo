@@ -8,6 +8,7 @@ import re
 import runpy
 import shutil
 import subprocess
+import tarfile
 import sys
 import tempfile
 from zipfile import BadZipFile
@@ -78,7 +79,7 @@ def matrix_problems(root, api):
         required = ("minecraft_version", "loader", "java_version", "loom_generation")
         if any(not props.get(key) for key in required):
             problems.append(f"{path.name}: missing target/version/Java/generation property")
-        elif (props["loader"] not in ("fabric", "neoforge")
+        elif (props["loader"] not in ("fabric", "forge", "neoforge")
               or path.stem != f"{props['minecraft_version']}-{props['loader']}"
               or not re.fullmatch(r"\d[\w.+-]*", props["minecraft_version"])
               or not props["java_version"].isdigit() or int(props["java_version"]) < 8
@@ -211,7 +212,7 @@ def native_temp_probe(api):
 
 
 def portablemc_state(smoke, api):
-    if os.name != "nt" and not api["is_wsl"]():
+    if os.name != "nt" and platform.system() != "Linux":
         return "unavailable", None
     if platform.machine().lower() not in ("amd64", "x86_64"):
         return "unavailable", None
@@ -219,14 +220,16 @@ def portablemc_state(smoke, api):
         _, _, executable = smoke["neoforge_paths"]("doctor", "probe")
     except (OSError, RuntimeError, ValueError, KeyError, subprocess.SubprocessError):
         return "unavailable", None
-    if not re.fullmatch(r"[0-9a-f]{64}", smoke["PORTABLEMC_SHA256"]) or not smoke["PORTABLEMC_VERSION"]:
+    checksum = "PORTABLEMC_SHA256" if os.name == "nt" else "LINUX_PORTABLEMC_SHA256"
+    if not re.fullmatch(r"[0-9a-f]{64}", smoke[checksum]) or not smoke["PORTABLEMC_VERSION"]:
         return "invalid", executable
-    if not executable.is_file() or not executable.with_name("portablemc.zip").is_file():
+    archive = "portablemc.zip" if os.name == "nt" else "portablemc.tar.gz"
+    if not executable.is_file() or not executable.with_name(archive).is_file():
         return "missing", executable
     try:
         smoke["verify_portablemc"](executable)
         return "valid", executable
-    except (OSError, RuntimeError, ValueError, KeyError, BadZipFile, subprocess.SubprocessError):
+    except (OSError, RuntimeError, ValueError, KeyError, BadZipFile, tarfile.TarError, subprocess.SubprocessError):
         return "invalid", executable
 
 

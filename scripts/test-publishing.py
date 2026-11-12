@@ -44,12 +44,12 @@ class PublishingSafety(unittest.TestCase):
             data = PUBLISH["publication_plan"]()
         self.assertEqual({r["target"] for r in data["entries"]}, {p.stem for p in (ROOT / 'gradle/matrix').glob('*.properties')})
         self.assertEqual(len({r['version_number'] for r in data['entries']}), len(data['entries']))
-        self.assertEqual(len(data['entries']), 12)
+        self.assertEqual(len(data['entries']), len(list((ROOT / 'gradle/matrix').glob('*.properties'))))
         self.assertEqual(data['project_id'], '7X8HTWbD')
         self.assertEqual(data['curseforge_project_id'], '1732433')
         self.assertEqual(data['modrinth_environments'], dict(client_side='required', server_side='required'))
         for row in data['entries']:
-            loader = {'fabric': 'Fabric', 'neoforge': 'NeoForge'}[row['loader']]
+            loader = {'fabric': 'Fabric', 'forge': 'Forge', 'neoforge': 'NeoForge'}[row['loader']]
             self.assertEqual(row['version_name'], f"[{loader}] Combo {data['mod_version']} ({row['minecraft']})")
             self.assertEqual(row['version_number'], f"{data['mod_version']}-{row['minecraft']}-{row['loader']}")
             self.assertEqual(row['artifact'], f"build/libs/{row['target']}/combo-{row['loader']}-{row['minecraft']}-{data['mod_version']}.jar")
@@ -113,7 +113,7 @@ class PublishingSafety(unittest.TestCase):
                         name='Combo ' + data['mod_version'], game_versions=['26.2'], loaders=['fabric'])
         with self.assertRaisesRegex(ValueError, 'Existing Modrinth'):
             PUBLISH['check_duplicates'](data, [existing])
-        for change in ({'name': 'Combo ' + data['mod_version'] + '0'}, {'loaders': ['quilt']}, {'game_versions': ['1.20.1']}):
+        for change in ({'name': 'Combo ' + data['mod_version'] + '0'}, {'loaders': ['quilt']}, {'game_versions': ['1.19.4']}):
             PUBLISH['check_duplicates'](data, [dict(existing, **change)])
         file = dict(id=1, name='combo-' + data['mod_version'] + '-v26.2-fabric.jar', versions=['26.2', 'Fabric'])
         with self.assertRaisesRegex(ValueError, 'Existing CurseForge'):
@@ -274,7 +274,7 @@ class PublishingSafety(unittest.TestCase):
             with patch.dict(PUBLISH['collect'].__globals__, replacements), patch.dict(os.environ, {}, clear=True), patch('builtins.print'):
                 PUBLISH['collect']()
                 bundle = root / 'build/publishing/github-assets'
-                self.assertEqual(len(list(bundle.glob('*.jar'))), 12)
+                self.assertEqual(len(list(bundle.glob('*.jar'))), len(data['entries']))
                 PUBLISH['restore'](bundle)
                 extra = bundle / 'unexpected-dev.jar'
                 extra.touch()

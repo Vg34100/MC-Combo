@@ -1,7 +1,7 @@
 package net.vg.combo.mixin;
 
 import com.mojang.logging.LogUtils;
-import dev.architectury.networking.NetworkManager;
+import net.vg.combo.network.ComboNetworking;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -108,7 +108,7 @@ public abstract class PlayerAttackMixin {
             float dealt = healthBefore - livingTarget.getHealth();
             if (dealt > 0.0F) {
                 serverPlayer.awardStat(ComboStats.DAMAGE_DEALT.get(), Math.round(dealt));
-                NetworkManager.sendToPlayer(serverPlayer,
+                ComboNetworking.sendToPlayer(serverPlayer,
                         new ComboDamagePopupPayload(target.getId(), dealt, result.finisher()));
             }
 
@@ -125,7 +125,7 @@ public abstract class PlayerAttackMixin {
 
         if (result.advanced()) {
             serverPlayer.awardStat(ComboStats.HITS_LANDED.get(), 1);
-            NetworkManager.sendToPlayer(serverPlayer, new ComboSyncPayload(result.stage(), result.remainingTicks(), result.finisher()));
+            ComboNetworking.sendToPlayer(serverPlayer, new ComboSyncPayload(result.stage(), result.remainingTicks(), result.finisher()));
             if (result.finisher()) {
                 serverPlayer.awardStat(ComboStats.FINISHERS_LANDED.get(), 1);
                 ComboCombat.applyFinisherFeedback(serverPlayer, target, serverLevel);

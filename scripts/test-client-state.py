@@ -8,6 +8,7 @@ from pathlib import Path
 import os
 import runpy
 import subprocess
+import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -52,10 +53,14 @@ def main():
     project = wrapper['Project'](ROOT)
     java_home, _, fatal = wrapper['select_gradle_java'](project, [])
     if fatal:
-        raise SystemExit('A native Java 25 JDK is required; use the established Windows environment.')
+        raise SystemExit('A native Java 25 JDK is required to run the matrix state checks.')
     java = str(wrapper['java_binary'](java_home)) if java_home else 'java'
     javac = str(Path(java).with_name('javac.exe' if os.name == 'nt' else 'javac')) if java_home else 'javac'
-    targets = [target for target in project.targets if target.props.get('release_smoke') == 'true']
+    requested = set(sys.argv[1:])
+    targets = [target for target in project.targets if target.name in requested] if requested else [
+        target for target in project.targets if target.props.get('release_smoke') == 'true']
+    if requested - {target.name for target in targets}:
+        raise SystemExit('Unknown target(s): ' + ', '.join(sorted(requested - {target.name for target in targets})))
     if not targets:
         raise SystemExit('No representative release targets configured')
     with tempfile.TemporaryDirectory(prefix='combo-state-') as temporary:

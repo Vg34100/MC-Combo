@@ -4,7 +4,9 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.ItemStack;
+//? if >=1.21 {
 import net.minecraft.world.item.MaceItem;
+//? }
 
 /**
  * Broad weapon grouping used to vary finisher feedback. Resolved from vanilla's own
@@ -16,7 +18,11 @@ import net.minecraft.world.item.MaceItem;
 public enum WeaponCategory {
     SWORD(SoundEvents.PLAYER_ATTACK_CRIT),
     AXE(SoundEvents.PLAYER_ATTACK_KNOCKBACK),
+    //? if >=1.21 {
     MACE(SoundEvents.MACE_SMASH_GROUND_HEAVY),
+    //? } else {
+    /*MACE(SoundEvents.PLAYER_ATTACK_KNOCKBACK),
+    *///? }
     OTHER(SoundEvents.PLAYER_ATTACK_CRIT);
 
     private final SoundEvent finisherSound;
@@ -26,9 +32,11 @@ public enum WeaponCategory {
     }
 
     public static WeaponCategory resolve(ItemStack weapon) {
+        //? if >=1.21 {
         if (weapon.getItem() instanceof MaceItem) {
             return MACE;
         }
+        //? }
         if (weapon.is(ItemTags.AXES)) {
             return AXE;
         }

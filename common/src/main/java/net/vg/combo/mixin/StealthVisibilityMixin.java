@@ -31,7 +31,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(LivingEntity.class)
 public abstract class StealthVisibilityMixin {
     @Inject(method = "getVisibilityPercent", at = @At("RETURN"), cancellable = true)
-    private void combo$reduceVisibilityWhenSneaking(Entity looker, CallbackInfoReturnable<Double> cir) {
+    private void combo$reduceVisibilityWhenSneaking(
+            //? if >=26.3 {
+            /*net.minecraft.server.level.ServerLevel level,
+            *///? }
+            Entity looker, CallbackInfoReturnable<Double> cir) {
         LivingEntity self = (LivingEntity) (Object) this;
         if (!(self instanceof Player player) || looker == null || !self.isDiscrete()) {
             return;

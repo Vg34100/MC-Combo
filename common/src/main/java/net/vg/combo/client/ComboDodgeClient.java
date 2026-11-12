@@ -1,7 +1,7 @@
 package net.vg.combo.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import dev.architectury.networking.NetworkManager;
+import net.vg.combo.network.ComboNetworking;
 import net.minecraft.client.KeyMapping;
 import net.vg.combo.network.ComboDodgeRequestPayload;
 
@@ -21,11 +21,11 @@ public final class ComboDodgeClient {
     public static void tick() {
         while (KEY_BINDING.consumeClick()) {
             //? if >=26.1 {
-            NetworkManager.sendToServer(new ComboDodgeRequestPayload());
+            ComboNetworking.sendToServer(new ComboDodgeRequestPayload());
             //? } else {
             /*net.minecraft.client.Minecraft minecraft = net.minecraft.client.Minecraft.getInstance();
             if (minecraft.player != null) {
-                NetworkManager.sendToServer(new ComboDodgeRequestPayload(
+                ComboNetworking.sendToServer(new ComboDodgeRequestPayload(
                         minecraft.player.input.leftImpulse, minecraft.player.input.forwardImpulse));
             }
             *///? }

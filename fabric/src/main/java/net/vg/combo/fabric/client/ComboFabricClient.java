@@ -20,7 +20,7 @@ public final class ComboFabricClient implements ClientModInitializer {
     public void onInitializeClient() {
         Combo.initClient();
         //? if >=26.1 {
-        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(Combo.MOD_ID, "combo_hud"), ComboHud::render);
+        HudElementRegistry.addLast(net.vg.combo.util.ComboIds.id("combo_hud"), ComboHud::render);
         LevelRenderEvents.BEFORE_GIZMOS.register(ctx -> {
             ComboDamagePopups.drainAndSpawn();
             ComboStaggerEffects.drainAndRender();

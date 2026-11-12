@@ -1,0 +1,37 @@
+modLoader = "javafml"
+loaderVersion = "[47,)"
+license = "MIT"
+
+[features.combo]
+javaVersion = "[${java_version},)"
+
+[[mods]]
+modId = "combo"
+version = "${version}"
+displayName = "Combo"
+authors = "Vg34100"
+description = '''
+Melee combos, finishers, timed parries, stealth takedowns, stamina and directional dodges.
+'''
+logoFile = "assets/combo/icon.png"
+
+[[dependencies.combo]]
+modId = "forge"
+mandatory = true
+versionRange = "[${forge_version},)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.combo]]
+modId = "minecraft"
+mandatory = true
+versionRange = "[${minecraft_version}]"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.combo]]
+modId = "architectury"
+mandatory = true
+versionRange = "[${architectury_api_version},)"
+ordering = "AFTER"
+side = "BOTH"

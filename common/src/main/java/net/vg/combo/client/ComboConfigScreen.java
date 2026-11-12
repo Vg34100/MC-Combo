@@ -4,7 +4,15 @@ import com.mojang.serialization.Codec;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.OptionInstance;
 import net.minecraft.client.gui.screens.Screen;
+//? if >=1.21 {
 import net.minecraft.client.gui.screens.options.OptionsSubScreen;
+//? } else {
+/*import net.minecraft.client.gui.screens.OptionsSubScreen;
+import net.minecraft.client.gui.components.OptionsList;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.network.chat.CommonComponents;
+import net.minecraft.client.gui.GuiGraphics;
+*///? }
 import net.minecraft.network.chat.Component;
 import net.vg.combo.config.ComboConfig;
 
@@ -17,13 +25,21 @@ import java.util.function.Consumer;
  */
 public final class ComboConfigScreen extends OptionsSubScreen {
     private static final Component TITLE = Component.translatable("combo.config.title");
+    //? if <1.21 {
+    /*private OptionsList list;
+    *///? }
 
     public ComboConfigScreen(Screen parent) {
         super(parent, Minecraft.getInstance().options, TITLE);
     }
 
     @Override
+    //? if >=1.21 {
     protected void addOptions() {
+    //? } else {
+    /*protected void init() {
+        this.list = new OptionsList(this.minecraft, this.width, this.height, 32, this.height - 32, 25);
+    *///? }
         OptionInstance<Double> minAttackStrength = doubleOption(
                 "combo.min_attack_strength", 0.0D, 1.0D, 100,
                 ComboConfig.minAttackStrength, value -> ComboConfig.minAttackStrength = value,
@@ -249,7 +265,19 @@ public final class ComboConfigScreen extends OptionsSubScreen {
                 dodgeCooldownTicks
         };
         this.list.addSmall(options);
+        //? if <1.21 {
+        /*this.addWidget(this.list);
+        this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> onClose())
+                .bounds(this.width / 2 - 100, this.height - 27, 200, 20).build());
+        *///? }
     }
+
+    //? if <1.21 {
+    /*@Override
+    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        basicListRender(graphics, this.list, mouseX, mouseY, partialTick);
+    }
+    *///? }
 
     @Override
     public void onClose() {

@@ -60,6 +60,7 @@ def inspect(matrix):
             'stats/ComboStats', 'network/ComboSyncPayload', 'network/ComboDamagePopupPayload',
             'network/ComboStaggerPayload', 'network/ComboBackstabPayload',
             'network/ComboStaminaPayload', 'network/ComboDodgeRequestPayload',
+            'network/ComboNetworking', 'client/ComboClientNetworking', 'util/ComboIds',
         )
         for name in required_classes:
             assert PACKAGE + name + '.class' in files, f'Missing mod class: {name}'
@@ -86,7 +87,7 @@ def inspect(matrix):
                 name = (mixins['package'] + '.' + mixin).replace('.', '/') + '.class'
                 assert name in files, f'Missing mixin class: {name}'
         if pins['loader'] == 'fabric':
-            assert 'META-INF/neoforge.mods.toml' not in files, 'Wrong loader metadata'
+            assert not {'META-INF/neoforge.mods.toml', 'META-INF/mods.toml'} & files, 'Wrong loader metadata'
             meta = read_json('fabric.mod.json')
             assert meta['id'] == MOD_ID and meta['version'] == root_pins['mod_version']
             assert meta['depends']['minecraft'] == pins['minecraft_version']
@@ -110,8 +111,33 @@ def inspect(matrix):
             if legacy:
                 assert b'net/minecraft/class_' in jar.read(PACKAGE + 'client/ComboHud.class'), 'Unremapped Fabric release'
 
+        elif pins['loader'] == 'forge':
+            assert not {'fabric.mod.json', 'META-INF/neoforge.mods.toml'} & files, 'Wrong loader metadata'
+            meta = jar.read('META-INF/mods.toml').decode()
+            assert quoted(meta, 'modId') == MOD_ID
+            assert quoted(meta, 'version') == root_pins['mod_version']
+            assert quoted(meta, 'loaderVersion') == '[47,)'
+            assert quoted(meta, 'javaVersion') == '[' + pins['java_version'] + ',)'
+            assert quoted(meta, 'logoFile') in files
+            assert read_json('pack.mcmeta')['pack']['pack_format'] == 15, 'Wrong Forge resource pack metadata'
+            bootstrap = jar.read(PACKAGE + 'forge/ComboForge.class')
+            assert b'net/minecraft/client/' not in bootstrap and b'net/minecraftforge/client/' not in bootstrap, 'Client types in dedicated-server bootstrap'
+            for hook in ('ComboForgeClient', 'ComboForgeWorldText'):
+                assert b'CLIENT' in jar.read(PACKAGE + 'forge/client/' + hook + '.class'), 'Unrestricted client hook'
+            blocks = re.findall(r'\[\[dependencies\.combo\]\](.*?)(?=\n\[|\Z)', meta, re.DOTALL)
+            deps = {quoted(block, 'modId'): block for block in blocks}
+            assert set(deps) == {'minecraft', 'forge', 'architectury'}
+            assert quoted(deps['minecraft'], 'versionRange') == '[' + pins['minecraft_version'] + ']'
+            for dep, pin in (('forge', 'forge_version'), ('architectury', 'architectury_api_version')):
+                assert quoted(deps[dep], 'versionRange') == '[' + pins[pin] + ',)'
+            assert all(re.search(r'^mandatory\s*=\s*true\s*$', block, re.MULTILINE) for block in deps.values())
+            assert all(quoted(block, 'side') == 'BOTH' for block in deps.values())
+            if tomllib is not None: tomllib.loads(meta)
+            manifest = jar.read('META-INF/MANIFEST.MF').decode()
+            assert re.search(r'^MixinConfigs: combo.mixins.json\s*$', manifest, re.MULTILINE), 'Missing Forge mixin registration'
+            assert PACKAGE + 'network/ComboLegacyPayload.class' in files
         else:
-            assert 'fabric.mod.json' not in files, 'Wrong loader metadata'
+            assert not {'fabric.mod.json', 'META-INF/mods.toml'} & files, 'Wrong loader metadata'
             meta = jar.read('META-INF/neoforge.mods.toml').decode()
             assert quoted(meta, 'modId') == MOD_ID
             assert quoted(meta, 'version') == root_pins['mod_version']
@@ -131,13 +157,13 @@ def inspect(matrix):
             if tomllib is not None:
                 tomllib.loads(meta)
             assert quoted(meta, 'javaVersion') == '[' + pins['java_version'] + ',)'
-            icon_field = 'iconFile' if pins['minecraft_version'] == '26.2' else 'logoFile'
+            icon_field = 'iconFile' if tuple(map(int, pins['minecraft_version'].split('.'))) >= (26, 2) else 'logoFile'
             assert quoted(meta, icon_field) in files
             assert quoted(meta, 'config') == 'combo.mixins.json'
         assert 'assets/combo/lang/en_us.json' in files
         assert any(name.startswith('LICENSE') for name in files)
         assert not any(name.endswith(('.jar', '.java')) for name in files), 'Embedded JAR or source archive'
-        for name in ('fabric.mod.json', 'META-INF/neoforge.mods.toml', 'combo.mixins.json'):
+        for name in ('fabric.mod.json', 'META-INF/neoforge.mods.toml', 'META-INF/mods.toml', 'combo.mixins.json'):
             if name in files:
                 assert b'${' not in jar.read(name), f'Unexpanded metadata: {name}'
     print(f'{matrix.stem}: release metadata, classes, mixins and resources OK')

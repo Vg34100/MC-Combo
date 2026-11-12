@@ -27,6 +27,6 @@ public final class ComboNeoForgeClient {
     }
 
     private void registerGuiLayers(RegisterGuiLayersEvent event) {
-        event.registerAboveAll(Identifier.fromNamespaceAndPath(Combo.MOD_ID, "combo_hud"), ComboHud::render);
+        event.registerAboveAll(net.vg.combo.util.ComboIds.id("combo_hud"), ComboHud::render);
     }
 }

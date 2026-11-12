@@ -1,6 +1,6 @@
 package net.vg.combo.combat;
 
-import dev.architectury.networking.NetworkManager;
+import net.vg.combo.network.ComboNetworking;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.vg.combo.config.ComboConfig;
@@ -63,7 +63,7 @@ public final class ComboStamina {
 
         Float previous = CURRENT.put(id, current);
         if (previous == null || Math.abs(previous - current) > 0.001F) {
-            NetworkManager.sendToPlayer(player, new ComboStaminaPayload(current, (float) ComboConfig.staminaMax));
+            ComboNetworking.sendToPlayer(player, new ComboStaminaPayload(current, (float) ComboConfig.staminaMax));
         }
     }
 
@@ -87,7 +87,7 @@ public final class ComboStamina {
         current -= amount;
         CURRENT.put(id, current);
         LAST_DRAIN_TICK.put(id, player.level().getGameTime());
-        NetworkManager.sendToPlayer(player, new ComboStaminaPayload(current, (float) ComboConfig.staminaMax));
+        ComboNetworking.sendToPlayer(player, new ComboStaminaPayload(current, (float) ComboConfig.staminaMax));
         return true;
     }
 
@@ -104,7 +104,7 @@ public final class ComboStamina {
         CURRENT.put(id, updated);
         LAST_DRAIN_TICK.put(id, player.level().getGameTime());
         if (Math.abs(current - updated) > 0.001F) {
-            NetworkManager.sendToPlayer(player, new ComboStaminaPayload(updated, (float) ComboConfig.staminaMax));
+            ComboNetworking.sendToPlayer(player, new ComboStaminaPayload(updated, (float) ComboConfig.staminaMax));
         }
     }
 

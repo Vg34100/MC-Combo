@@ -21,12 +21,14 @@ Detailed reusable procedures live under `docs/development/`.
 The current suite matrix is:
 
 ```text
+1.20.1    Fabric / Forge
 1.21      Fabric / NeoForge
 1.21.1    Fabric / NeoForge
 26.1      Fabric / NeoForge
 26.1.1    Fabric / NeoForge
 26.1.2    Fabric / NeoForge
 26.2      Fabric / NeoForge
+26.3      Fabric / NeoForge
 ```
 
 When this matrix exists, discover registered targets from:
@@ -48,6 +50,7 @@ build.matrix.gradle
 gradle/matrix/*.properties
 common/
 fabric/
+forge/
 neoforge/
 ```
 

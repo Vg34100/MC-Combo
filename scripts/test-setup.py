@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import runpy
 import subprocess
+import tarfile
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -203,13 +204,20 @@ class SetupSafety(unittest.TestCase):
         self.assertFalse(list(self.root.glob("combo-doctor-*")))
 
     def test_portablemc_read_only_verifier_rejects_modified_binary(self):
-        archive = self.root / "portablemc.zip"
-        executable = self.root / "portablemc.exe"
-        with ZipFile(archive, "w") as output:
-            output.writestr("portablemc.exe", b"synthetic-binary")
+        archive = self.root / ("portablemc.zip" if os.name == 'nt' else "portablemc.tar.gz")
+        executable = self.root / ("portablemc.exe" if os.name == 'nt' else "portablemc")
+        if os.name == 'nt':
+            with ZipFile(archive, "w") as output:
+                output.writestr("portablemc.exe", b"synthetic-binary")
+        else:
+            with tarfile.open(archive, "w:gz") as output:
+                entry = tarfile.TarInfo("portablemc-5.0.5-linux-x86_64-gnu/portablemc")
+                entry.size = len(b"synthetic-binary")
+                output.addfile(entry, io.BytesIO(b"synthetic-binary"))
         executable.write_bytes(b"synthetic-binary")
         smoke_globals = SMOKE["verify_portablemc"].__globals__
-        with patch.dict(smoke_globals, {"PORTABLEMC_SHA256": hashlib.sha256(archive.read_bytes()).hexdigest()}), patch("subprocess.check_output", return_value="portablemc 5.0.5\n"):
+        key = "PORTABLEMC_SHA256" if os.name == 'nt' else "LINUX_PORTABLEMC_SHA256"
+        with patch.dict(smoke_globals, {key: hashlib.sha256(archive.read_bytes()).hexdigest()}), patch("subprocess.check_output", return_value="portablemc 5.0.5\n"):
             SMOKE["verify_portablemc"](executable)
             executable.write_bytes(b"modified")
             with self.assertRaisesRegex(RuntimeError, "differs from verified archive"):
