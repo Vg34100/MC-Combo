@@ -90,10 +90,70 @@ public class SimpleConfig {
         }
     }
 
+    /**
+     * Stable {@code <filename>.properties}. Older releases wrote {@code <filename>-<version>.properties},
+     * which reset settings on every update; the first start without the stable file copies the
+     * newest of those (left untouched, so older jars keep working).
+     */
     public static ConfigRequest of(String filename) {
-        Path path = Platform.getConfigFolder();
-        String versionedFilename = filename + "-" + MOD_VERSION + ".properties";
-        return new ConfigRequest(path.resolve(versionedFilename).toFile(), versionedFilename);
+        Path folder = Platform.getConfigFolder();
+        String stableFilename = filename + ".properties";
+        Path stable = folder.resolve(stableFilename);
+        if (!Files.exists(stable)) {
+            Path legacy = newestVersionedFile(folder, filename);
+            if (legacy != null) {
+                try {
+                    Files.copy(legacy, stable);
+                    LOGGER.info("Config '{}' carried over settings from {}", stableFilename, legacy.getFileName());
+                } catch (IOException e) {
+                    LOGGER.warn("Config '{}' could not copy settings from {}: {}", stableFilename, legacy.getFileName(), e.toString());
+                }
+            }
+        }
+        return new ConfigRequest(stable.toFile(), stableFilename);
+    }
+
+    /** Newest {@code <filename>-<version>.properties} by numeric version, or null. */
+    static Path newestVersionedFile(Path folder, String filename) {
+        String prefix = filename + "-", suffix = ".properties";
+        Path newest = null;
+        int[] newestVersion = null;
+        try (java.nio.file.DirectoryStream<Path> files = Files.newDirectoryStream(folder, prefix + "*" + suffix)) {
+            for (Path file : files) {
+                String name = file.getFileName().toString();
+                int[] version = parseVersion(name.substring(prefix.length(), name.length() - suffix.length()));
+                if (version != null && (newestVersion == null || compareVersions(version, newestVersion) > 0)) {
+                    newest = file;
+                    newestVersion = version;
+                }
+            }
+        } catch (IOException | RuntimeException ignored) {
+            // Missing or unreadable folder: nothing to carry over.
+        }
+        return newest;
+    }
+
+    private static int[] parseVersion(String text) {
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("^(\\d+(?:\\.\\d+)*)").matcher(text);
+        if (!matcher.find()) return null;
+        String[] parts = matcher.group(1).split("\\.");
+        int[] version = new int[parts.length];
+        for (int i = 0; i < parts.length; i++) {
+            try {
+                version[i] = Integer.parseInt(parts[i]);
+            } catch (NumberFormatException e) {
+                return null;
+            }
+        }
+        return version;
+    }
+
+    private static int compareVersions(int[] a, int[] b) {
+        for (int i = 0; i < Math.max(a.length, b.length); i++) {
+            int left = i < a.length ? a[i] : 0, right = i < b.length ? b[i] : 0;
+            if (left != right) return Integer.compare(left, right);
+        }
+        return 0;
     }
 
     private void createConfig() throws IOException {
